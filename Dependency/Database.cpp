@@ -26,7 +26,7 @@ bool Database::ConnectionFunction()
 
     cout << "Connecting to Database : " << conn << endl;
 
-    conn = mysql_real_connect(conn, "localhost", "root", "", "CTMS_WORKSHOP1", 3306, NULL, 0);
+    conn = mysql_real_connect(conn, "192.168.99.100", "mysql-user1", "Adimixx@123", "CTMS_WORKSHOP1", 3306, NULL, 0);
     if (conn)
     {
         cout << "Database Connected To MySql : " << conn << endl;

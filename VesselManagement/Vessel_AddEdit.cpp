@@ -88,14 +88,10 @@ void VesselManagement::AddEdit(int VesselID) {
                 Dependency::SleepCommand(1000);
             } else {
                 cout << "VESSEL ADDED SUCCESSFULLY\n";
-                do {
-                    InputInt = input::InputInt("Do you want to add decks for this ship ? \n1 - Yes, 0 - No :");
-                } while (InputInt != 1 && InputInt != 0);
-
-                if (InputInt == 1) {
-                    SelectedVesselID = db->db.LastInsertedID();
-                    Deck_AddEdit(0);
-                }
+                Dependency::SleepCommand(1000);
+                SelectedVesselID = db->db.LastInsertedID();
+                Detail();
+                InputInt = 1;
             }
         }
     }

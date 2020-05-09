@@ -12,7 +12,7 @@ class Package_Route{
 public:
     Package_Route(long id, long routeId, long packageId)
             : ID(id), RouteID(routeId), PackageID(packageId){};
-    Package_Route(){};
+    Package_Route(): ID(0), RouteID(0), PackageID(0){};
 
     long ID;
     long RouteID;

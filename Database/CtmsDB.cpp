@@ -172,8 +172,8 @@ void CtmsDB::initData() {
 template<>
 bool CtmsDB::Insert<Deck>(Deck item) {
     string stat = "DECK (NAME, LEVEL, MAXPASSENGER, PREMIUMID, PREMIUMVALUE, VESSELID) VALUES ('" + item.Name + "' , " +
-                  to_string(item.Level) + "," + to_string(item.MaxPassenger) + "," + to_string(item.PremiumID) + "," +
-                  to_string(item.PremiumValue) + "," + to_string(item.VesselID) + ")";
+                  to_string(item.Level) + "," + to_string(item.MaxPassenger) + "," + ((item.PremiumID != 0) ? to_string(item.PremiumID) : "NULL") + "," +
+                  ((item.PremiumID != 0) ? to_string(item.PremiumValue) : "NULL") + "," + to_string(item.VesselID) + ")";
     return Operation(stat, 1);
 }
 
@@ -185,11 +185,11 @@ bool CtmsDB::Insert<Route>(Route item) {
 
 template<>
 bool CtmsDB::Insert<Package, Package_Route>(Package aPackage, vector<Package_Route> item2) {
-    string stat = "package (Name, START_DATE, END_DATE, Price, VesselID) values ('" + aPackage.Name + "', '" +
+    string stat = "PACKAGE (Name, Start_Date, End_Date, Price, VesselID) values ('" + aPackage.Name + "', '" +
                   aPackage.start_date + "', '" + aPackage.end_date + "', " + to_string(aPackage.price) + "," +
                   to_string(aPackage.vesselID) + ")";
     if (Operation(stat, 1)) {
-        stat = "package_route (routeid, packageid) values ";
+        stat = "PACKAGE_ROUTE (routeid, packageid) values ";
         for (int i = 0; i < item2.size(); ++i) {
             if (i != 0) stat += ",";
             stat += "(" + to_string(item2.at(i).RouteID) + ", " + to_string(db.LastInsertedID()) + ")";

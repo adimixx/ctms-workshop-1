@@ -26,6 +26,7 @@ public:
     static string getInput(string coutText, bool nullable);
 
     static string InputDate(string coutText, Database db);
+    static string ConvertDate(string input, Database db);
     static bool compareDate(string from, string to, Database db, bool);
 
     static string sanitizeString(string input);

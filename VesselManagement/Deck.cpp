@@ -19,8 +19,8 @@ string VesselManagement::Deck_Name(int DeckID) {
         name = input::getInput("Deck Name");
 
         if ((deckList
-                >> where([&](Deck const &a) { return boost::to_lower_copy(a.Name) == boost::to_lower_copy(a.Name); })
-                >> count()) != 0) {
+                >> where([&](Deck const &a) { return boost::to_lower_copy(a.Name) == boost::to_lower_copy(name); })
+                >> count()) > 0) {
             cout << "Deck name already exists. Please enter different name\n";
             check = false;
         }
@@ -69,7 +69,8 @@ void VesselManagement::Deck_AddEdit(int DeckID) {
     Dependency::ClearScreen(Header);
 
     Deck deck;
-    deck.PremiumID = 0;
+    deck.PremiumID = NULL;
+    deck.PremiumValue = NULL;
     if (DeckID != 0) deck = from(db->deck) >> first_or_default([&](Deck const &x) { return x.Id == DeckID; });
     auto vessel = from(db->vessel) >> first_or_default([&](Vessel const &x) { return x.ID == SelectedVesselID; });
 
@@ -112,7 +113,7 @@ void VesselManagement::Deck_AddEdit(int DeckID) {
         if (!inserted) {
             cout << "DATABASE ERROR\n";
         } else {
-            cout << ((DeckID != 0) ? "VESSEL UPDATE SUCESSFULLY\n" : "VESSEL ADDED SUCCESSFULLY\n");
+            cout << ((DeckID != 0) ? "DECK UPDATED SUCESSFULLY\n" : "DECK ADDED SUCCESSFULLY\n");
         }
         Dependency::SleepCommand(1000);
     }

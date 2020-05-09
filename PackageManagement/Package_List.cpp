@@ -38,8 +38,7 @@ void PackageManagement::Detail() {
     do {
         auto pack = from(db->package) >> first_or_default([&](Package const &a) { return a.ID == SelectedPackageID; });
         auto vessel = from(db->vessel) >> first_or_default([&](Vessel const &a) { return a.ID == pack.vesselID; });
-        auto route = from(db->package_route) >> where([&](Package_Route const &a) { return a.PackageID == pack.ID; })
-                                             >> to_vector();
+        auto route = from(db->package_route) >> where([&](Package_Route const &a) { return a.PackageID == pack.ID; }) >> orderby_ascending([&](Package_Route const &a) { return a.ID; })>> to_vector();
         Dependency::ClearScreen("Package Management :: Package Details");
 
         detail_package(pack, false);

@@ -17,7 +17,7 @@ int input::InputInt(string coutText, int minVal, int maxVal) {
 }
 
 double input::InputDouble(string coutText) {
-    return processInput<double>(coutText, 0, 0,false, false);
+    return processInput<double>(coutText, 0, 0, false, false);
 }
 
 double input::InputDouble(string coutText, int minVal) {
@@ -53,14 +53,25 @@ string input::getInput(string coutText, bool nullable) {
 }
 
 string input::InputDate(string coutText, Database db) {
+    bool check = false;
+    string conv = "";
     do {
-        db.statement = "SELECT STR_TO_DATE('" + getInput(coutText) + "','%d/%m/%Y')";
-        db.select();
-        db.row = db.FetchRow();
-        if (db.row == NULL) {
-            cout << "Invalid Date format. Please re-enter your date\n";
+        conv = ConvertDate(getInput(coutText), db);
+        if (conv != "") {
+            check = true;
         }
-    } while (db.row == NULL);
+    } while (!check);
+    return conv;
+}
+
+string input::ConvertDate(string input, Database db) {
+    db.statement = "SELECT STR_TO_DATE('" + input + "','%d/%m/%Y')";
+    db.select();
+    db.row = db.FetchRow();
+    if (db.row[0] == nullptr) {
+        cout << "Invalid Date format. Please re-enter your date\n";
+        return "";
+    }
     return string(db.row[0]);
 }
 
@@ -68,7 +79,7 @@ bool input::compareDate(string from, string to, Database db, bool coutB) {
     db.statement = "select datediff('" + to + "','" + from + "');";
     db.select();
     db.row = db.FetchRow();
-    if (db.row == NULL || stoi(string(db.row[0])) <= 0) {
+    if (db.row[0] == nullptr || stoi(string(db.row[0])) <= 0) {
         if (stoi(string(db.row[0])) <= 0 && coutB) cout << "Start date must be greater than end date\n";
         return false;
     } else {
@@ -86,6 +97,7 @@ T input::processInput(string coutText, T min, T max, bool checkMin, bool checkMa
     bool checked = true;
     do {
         try {
+            checked = true;
             string input = getInput(coutText);
 
             if (is_same<T, int>::value) {
