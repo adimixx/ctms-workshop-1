@@ -9,13 +9,18 @@
 #include <boost/optional.hpp>
 using namespace std;
 
-class Route{
+class Route
+{
 public:
-    Route(long id, string name) : ID(id), name(name) {};
-    Route(){};
+	Route(long id, string name) : ID(id), name(name)
+	{
+	};
+	Route()
+	{
+	};
 
-    long ID;
-    string name;
+	long ID;
+	string name;
 };
 
 #endif //WORKSHOP1_ROUTE_H

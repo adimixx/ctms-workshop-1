@@ -10,12 +10,11 @@
 class RouteManagement
 {
 public:
-    RouteManagement(CtmsDB*);
-    void Menu(), Add(), List(), Delete();
+	RouteManagement(CtmsDB*);
+	void Menu(), Add(), List(), Delete();
 private:
-    CtmsDB *db;
-    int InputInt, SelectedIndex;
+	CtmsDB* db;
+	int InputInt, SelectedIndex;
 };
-
 
 #endif //CTMS_NEW_ROUTEMANAGEMENT_H

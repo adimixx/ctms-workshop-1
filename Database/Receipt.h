@@ -9,18 +9,23 @@
 #include <boost/optional.hpp>
 using namespace std;
 
-class Receipt{
+class Receipt
+{
 public:
-    Receipt(long id, string date, double total, double cashIn, double cashOut, long purchaseUserId)
-            : ID(id), date(date), total(total), cashIn(cashIn), cashOut(cashOut), purchaseUserID(purchaseUserId) {};
-    Receipt(){};
+	Receipt(long id, string date, double total, double cashIn, double cashOut, long purchaseUserId)
+		: ID(id), date(date), total(total), cashIn(cashIn), cashOut(cashOut), purchaseUserID(purchaseUserId)
+	{
+	};
+	Receipt()
+	{
+	};
 
-    long ID;
-    string date;
-    double total;
-    double cashIn;
-    double cashOut;
-    long purchaseUserID;
+	long ID;
+	string date;
+	double total;
+	double cashIn;
+	double cashOut;
+	long purchaseUserID;
 };
 
 #endif //WORKSHOP1_RECEIPT_H

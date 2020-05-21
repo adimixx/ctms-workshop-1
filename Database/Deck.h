@@ -8,17 +8,23 @@
 #include <boost/optional.hpp>
 using namespace std;
 
-class Deck{
+class Deck
+{
 public:
-    Deck(long id, string name, int level, int maxPassenger, long premiumId, double premiumValue, long vesselId)
-            : Id(id), PremiumID(premiumId), VesselID(vesselId), Name(name), Level(level), MaxPassenger(maxPassenger),
-              PremiumValue(premiumValue) {};
-    Deck(){};
+	Deck(long id, string name, int level, int maxPassenger, long premiumId, double premiumValue, long vesselId)
+		: Id(id), PremiumID(premiumId), VesselID(vesselId), Name(name), Level(level), MaxPassenger(maxPassenger),
+		  PremiumValue(premiumValue)
+	{
+	};
+	Deck() : Id(0), PremiumID(0), VesselID(0), Level(0), MaxPassenger(0),
+			 PremiumValue(0)
+	{
+	};
 
-    long Id, VesselID;
-    string Name;
-    int Level, MaxPassenger;
-    long PremiumID;
-    double PremiumValue;
+	long Id, VesselID;
+	string Name;
+	int Level, MaxPassenger;
+	long PremiumID;
+	double PremiumValue;
 };
 #endif //WORKSHOP1_DECK_H

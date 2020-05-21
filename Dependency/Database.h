@@ -7,22 +7,22 @@
 
 #include <iostream>
 #include <string>
-#include <mysql/mysql.h>
+#include <mysql.h>
 using namespace std;
 
-class Database {
+class Database
+{
 public:
-    string statement;
-    MYSQL_RES* res;
-    MYSQL_ROW row, FetchRow();
-    MYSQL* conn;
-    int data;
-    bool ConnectionFunction();
-    void select();
-    bool cud();
-    int RowCount();
-    int LastInsertedID();
+	string statement;
+	MYSQL_RES* res;
+	MYSQL_ROW row, FetchRow();
+	MYSQL* conn;
+	int data;
+	bool ConnectionFunction();
+	void select();
+	bool cud();
+	int RowCount();
+	int LastInsertedID();
 };
-
 
 #endif //WORKSHOP1_DATABASE_H

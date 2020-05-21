@@ -27,40 +27,40 @@
 using namespace std;
 using namespace cpplinq;
 
-class CtmsDB {
+class CtmsDB
+{
 public:
-    explicit CtmsDB(Database);
+	explicit CtmsDB(Database);
 
-    vector<Deck> deck;
-    vector<Package> package;
-    vector<Package_Route> package_route;
-    vector<Receipt> receipt;
-    vector<Role> role;
-    vector<Route> route;
-    vector<Ticket> ticket;
-    vector<Ticket_Type> ticket_type;
-    vector<User> user;
-    vector<User_Role> user_role;
-    vector<Value_Type> value_type;
-    vector<Vessel> vessel;
+	vector<Deck> deck;
+	vector<Package> package;
+	vector<Package_Route> package_route;
+	vector<Receipt> receipt;
+	vector<Role> role;
+	vector<Route> route;
+	vector<Ticket> ticket;
+	vector<Ticket_Type> ticket_type;
+	vector<User> user;
+	vector<User_Role> user_role;
+	vector<Value_Type> value_type;
+	vector<Vessel> vessel;
 
-    void initData();
+	void initData();
 
-    template<class T>
-    bool Delete(T item);
+	template<class T>
+	bool Delete(T item);
 
-    template<class T>
-    bool Update(T item);
-    template<class T, class U>
-    bool Update(T item, vector<U> item2);
-    template<class T>
-    bool Insert(T item);
-    template<class T, class U>
-    bool Insert(T item, vector<U> item2);
-    Database db;
+	template<class T>
+	bool Update(T item);
+	template<class T, class U>
+	bool Update(T item, vector<U> item2);
+	template<class T>
+	bool Insert(T item);
+	template<class T, class U>
+	bool Insert(T item, vector<U> item2);
+	Database db;
 private:
-    bool Operation(string Query, int Type);
+	bool Operation(string Query, int Type);
 };
-
 
 #endif //WORKSHOP1_CTMSDB_H

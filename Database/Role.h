@@ -9,13 +9,18 @@
 #include <boost/optional.hpp>
 using namespace std;
 
-class Role{
+class Role
+{
 public:
-    Role(long id, string name) : ID(id), name(name) {};
-    Role(){};
+	Role(long id, string name) : ID(id), name(name)
+	{
+	};
+	Role()
+	{
+	};
 
-    long ID;
-    string name;
+	long ID;
+	string name;
 };
 
 #endif //WORKSHOP1_ROLE_H

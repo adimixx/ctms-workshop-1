@@ -9,13 +9,18 @@
 #include <boost/optional.hpp>
 using namespace std;
 
-class Value_Type{
+class Value_Type
+{
 public:
-    Value_Type(long id, string name) : ID(id), name(name) {};
-    Value_Type(){};
+	Value_Type(long id, string name) : ID(id), name(name)
+	{
+	};
+	Value_Type()
+	{
+	};
 
-    long ID;
-    string name;
+	long ID;
+	string name;
 };
 
 #endif //WORKSHOP1_VALUE_TYPE_H
