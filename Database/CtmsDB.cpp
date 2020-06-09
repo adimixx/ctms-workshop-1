@@ -41,7 +41,7 @@ void CtmsDB::initData()
 	}
 
 	db.statement =
-		"select ID, Name, DATE_FORMAT(START_DATE,'%d/%m/%Y') ,DATE_FORMAT(END_DATE,'%d/%m/%Y'), Price, VesselID from PACKAGE";
+		"select ID, Name, DATE_FORMAT(START_DATE,'%d/%m/%Y %H%i') ,DATE_FORMAT(END_DATE,'%d/%m/%Y'), Price, VesselID from PACKAGE";
 	db.select();
 	while ((db.row = db.FetchRow()))
 	{
@@ -101,7 +101,7 @@ void CtmsDB::initData()
 	}
 
 	db.statement =
-		"select ID, ReceiptID,PackageID,DeckID,TicketTypeID,DATE_FORMAT(DateIssued,'%d/%m/%Y'),Name,Phone,Email,Price,CheckIn,CheckInUserID from TICKET";
+		"select ID, ReceiptID,PackageID,DeckID,TicketTypeID,DATE_FORMAT(DateIssued,'%d/%m/%Y %H%i'),Name,Phone,Email,Price,CheckIn,CheckInUserID,DATE_FORMAT(CheckInDate,'%d/%m/%Y %H%i') from TICKET";
 	db.select();
 	while ((db.row = db.FetchRow()))
 	{
@@ -116,8 +116,9 @@ void CtmsDB::initData()
 			string(db.row[7]),
 			string(db.row[8]),
 			stod(string(db.row[9])),
-			!(string(db.row[10]) == "0"),
-			(db.row[4] == nullptr) ? 0 : stol(string(db.row[11]))
+			(db.row[10] != nullptr),
+			(db.row[10] == nullptr) ? 0 : stol(string(db.row[11])),
+			(db.row[10] == nullptr) ? "" : string(db.row[12])
 		));
 	}
 
@@ -187,6 +188,23 @@ void CtmsDB::initData()
 }
 
 template<>
+bool CtmsDB::Insert<User, User_Role>(User item, vector<User_Role> user_roles)
+{
+	string stat = "USER (USERNAME, PASSWORD, ISACTIVE, ADDEDBY) VALUES ('" + item.Username + "' , '" + item.Password + "',1,'" + to_string(item.AddedBy.value()) + "')";
+	if (Operation(stat, 1))
+	{
+		stat = "USER_ROLE (UserID, RoleID) values ";
+		for (int i = 0; i < user_roles.size(); i++)
+		{
+			if (i != 0) stat += ",";
+			stat += "(" + to_string(db.LastInsertedID()) + ", " + to_string(user_roles.at(i).RoleID) + ")";
+		}
+		return Operation(stat, 1);
+	}
+	return false;
+}
+
+template<>
 bool CtmsDB::Insert<Deck>(Deck item)
 {
 	string stat = "DECK (NAME, LEVEL, MAXPASSENGER, PREMIUMID, PREMIUMVALUE, VESSELID) VALUES ('" + item.Name + "' , " +
@@ -212,7 +230,7 @@ bool CtmsDB::Insert<Package, Package_Route>(Package aPackage, vector<Package_Rou
 	if (Operation(stat, 1))
 	{
 		stat = "PACKAGE_ROUTE (routeid, packageid) values ";
-		for (int i = 0; i < item2.size(); ++i)
+		for (int i = 0; i < item2.size(); i++)
 		{
 			if (i != 0) stat += ",";
 			stat += "(" + to_string(item2.at(i).RouteID) + ", " + to_string(db.LastInsertedID()) + ")";
@@ -233,16 +251,42 @@ bool CtmsDB::Insert<Vessel>(Vessel item)
 }
 
 template<>
+bool CtmsDB::Insert<Receipt, Ticket>(Receipt item, vector<Ticket> itemm)
+{
+	string stat = "RECEIPT (Date, Total, CashIn, CashOut, PurchaseUserID) VALUES ('" +
+		item.date + "' , " + to_string(item.total) + "," + to_string(item.cashIn) + "," + to_string(item.cashOut) + "," + to_string(item.purchaseUserID) + ")";
+	if (Operation(stat, 1))
+	{
+		string stat = "TICKET (ReceiptID, PackageID, DeckID, TicketTypeID, DateIssued, Name, Phone, Email, Price) VALUES ";
+
+		for (auto item : itemm)
+		{
+			stat += "(" + to_string(db.LastInsertedID()) + ", " + to_string(item.packageID) + "," + to_string(item.deckID) + "," + to_string(item.ticketTypeID) + ", NOW() ,'"
+				+ item.name + "', '" + item.phone + "' , '" + item.email + "' ," + to_string(item.price) + ") , ";
+		}
+		stat = stat.substr(0, (stat.length() - 3));
+		return Operation(stat, 1);
+	}
+	return false;
+}
+
+template<>
 bool CtmsDB::Update<Deck>(Deck item)
 {
 	string stat = "DECK SET ID = " + to_string(item.Id);
 	return Operation(stat, 2);
 }
-
+/***Check in Ticket***/
 template<>
-bool CtmsDB::Update<Route>(Route item)
+bool CtmsDB::Update<Ticket>(vector<Ticket> item)
 {
-	string stat = "ROUTE SET NAME = '" + item.name + "' WHERE ID = " + to_string(item.ID);
+	string stat = "TICKET SET CheckIn = 1, CheckInUserID = " + to_string(item.at(0).checkInUserID.value()) + " , CheckInDate = NOW() WHERE ID IN (";
+	for (int j = 0; j < item.size(); j++)
+	{
+		if (j != 0) stat += ",";
+		stat += to_string(item.at(j).ID);
+	}
+	stat += ")";
 	return Operation(stat, 2);
 }
 
@@ -255,7 +299,9 @@ bool CtmsDB::Update<Vessel>(Vessel item)
 		", LENGTH = " + to_string(item.length) +
 		", BREADTH = " +
 		to_string(item.breadth) + ", YEAR = " +
-		to_string(item.year) + " WHERE ID = " +
+		to_string(item.year) + " , ISACTIVE = ";
+	stat += (item.isActive) ? "1" : "0";
+	stat += " WHERE ID = " +
 		to_string(item.ID);
 	return Operation(stat, 2);
 }
@@ -265,32 +311,90 @@ bool CtmsDB::Update<Package, Package_Route>(Package aPackage, vector<Package_Rou
 {
 	string stat = "PACKAGE SET NAME='" + aPackage.Name +
 		"', PRICE = " + to_string(aPackage.price) +
-		", STARTDATE = '" + aPackage.start_date +
-		"', ENDDATE = '" + aPackage.end_date +
+		", START_DATE = '" + aPackage.start_date +
+		"', END_DATE = '" + aPackage.end_date +
 		"', VESSELID = " + to_string(aPackage.vesselID) +
 		" WHERE ID = " + to_string(aPackage.ID);
 	if (Operation(stat, 2))
 	{
 		auto noUpdate = from(item2) >> where([&](Package_Route const& b)
 		{ return b.ID != 0; }) >> to_vector();
-		for (int i = 0; i < noUpdate.size(); ++i)
-		{
-			stat = "";
-			if (!stat.empty()) stat += ",";
-			stat += to_string(noUpdate.at(i).ID);
+		if (noUpdate.empty()){
+			stat = "PACKAGE_ROUTE WHERE PACKAGEID = " + to_string(aPackage.ID);
 		}
-		stat += ")";
-		stat = "PACKAGE_ROUTE WHERE PACKAGEID = " + to_string(aPackage.ID) + "AND ID NOT IN (" + stat;
+
+		else{
+			stat = "";
+			for (int i = 0; i < noUpdate.size(); i++)
+			{
+				if (!stat.empty()) stat += ",";
+				stat += to_string(noUpdate.at(i).ID);
+			}
+			stat += ")";
+			stat = "PACKAGE_ROUTE WHERE PACKAGEID = " + to_string(aPackage.ID) + " AND ID NOT IN (" + stat;
+		}
 
 		if (Operation(stat, 3))
 		{
 			auto insert = from(item2) >> where([&](Package_Route const& a)
 			{ return a.ID == 0; }) >> to_vector();
-			stat = "package_route (routeid, packageid) values ";
-			for (int i = 0; i < insert.size(); ++i)
+			if (insert.empty()) return true;
+			stat = "PACKAGE_ROUTE (routeid, packageid) values ";
+			for (int i = 0; i < insert.size(); i++)
 			{
 				if (i != 0) stat += ",";
 				stat += "(" + to_string(insert.at(i).RouteID) + ", " + to_string(aPackage.ID) + ")";
+			}
+			return Operation(stat, 1);
+		}
+	}
+	return false;
+}
+
+/***ONLY FOR DEACTIVATING & ACTIVATING USER***/
+template<>
+bool CtmsDB::Update<User>(User item)
+{
+	string stat = "USER SET ISACTIVE = ";
+	stat += (item.IsActive) ? "1" : "0";
+	stat += " WHERE ID = " + to_string(item.Id) + "";
+	return Operation(stat, 2);
+}
+
+template<>
+bool CtmsDB::Update<User, User_Role>(User item, vector<User_Role> user_roles)
+{
+	string stat = "USER SET USERNAME = '" + item.Username + "' , PASSWORD = '" + item.Password + "' WHERE ID = " + to_string(item.Id);
+	if (Operation(stat, 2))
+	{
+		auto noUpdate = from(user_roles) >> where([&](User_Role const& b)
+		{ return b.Id != 0; }) >> to_vector();
+
+		if (noUpdate.empty()){
+			stat = "USER_ROLE WHERE USERID = " + to_string(item.Id);
+		}
+		else{
+			stat = "";
+			for (int i = 0; i < noUpdate.size(); i++)
+			{
+				if (!stat.empty()) stat += ",";
+				stat += to_string(noUpdate.at(i).Id);
+			}
+			stat += ")";
+			stat = "USER_ROLE WHERE USERID = " + to_string(item.Id) + " AND ID NOT IN (" + stat;
+		}
+
+		if (Operation(stat, 3))
+		{
+			auto insert = from(user_roles) >> where([&](User_Role const& a)
+			{ return a.Id == 0; }) >> to_vector();
+			if (insert.empty()) return true;
+
+			stat = "USER_ROLE (UserID, RoleID) values ";
+			for (int i = 0; i < insert.size(); i++)
+			{
+				if (i != 0) stat += ",";
+				stat += "(" + to_string(item.Id) + ", " + to_string(insert.at(i).RoleID) + ")";
 			}
 			return Operation(stat, 1);
 		}
@@ -316,10 +420,36 @@ template<>
 bool CtmsDB::Delete<Vessel>(Vessel item)
 {
 	string stat = "DECK WHERE VESSEL_ID = " + to_string(item.ID);
-	Operation(stat, 3);
+	if (Operation(stat, 3))
+	{
+		stat = "VESSEL WHERE ID = " + to_string(item.ID);
+		return Operation(stat, 3);
+	}
+	return false;
+}
 
-	stat = "VESSEL WHERE ID = " + to_string(item.ID);
-	return Operation(stat, 3);
+template<>
+bool CtmsDB::Delete<User>(User item)
+{
+	string stat = "USER_ROLE WHERE UserID = " + to_string(item.Id);
+	if (Operation(stat, 3))
+	{
+		string stat = "USER WHERE ID = " + to_string(item.Id);
+		return Operation(stat, 3);
+	}
+	return false;
+}
+
+template<>
+bool CtmsDB::Delete<Package>(Package item)
+{
+	string stat = "PACKAGE_ROUTE WHERE PackageID = " + to_string(item.ID);
+	if (Operation(stat, 3))
+	{
+		string stat = "PACKAGE WHERE ID = " + to_string(item.ID);
+		return Operation(stat, 3);
+	}
+	return false;
 }
 
 bool CtmsDB::Operation(string Query, int Type)

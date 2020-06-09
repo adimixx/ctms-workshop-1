@@ -11,7 +11,7 @@ class PackageManagement
 {
 public:
 	PackageManagement(CtmsDB* db);
-	void Menu(), AddEdit(int PackageID), List(), Detail();
+	void Menu(), AddEdit(int PackageID), List(), Detail(), Delete();
 private:
 	CtmsDB* db;
 

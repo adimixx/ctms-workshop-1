@@ -17,14 +17,21 @@ void PackageManagement::List()
 		do
 		{
 			auto packages = db->package;
-
+			TextTable t('-', '|', '+');
+			t.add("Num");
+			t.add("Package Name");
+			t.add("Departure - Return Date");
+			t.endOfRow();
 			for (int j = 0; j < packages.size(); j++)
 			{
 				auto pack = packages.at(j);
-				cout << j + 1 << " : " << pack.Name << "\nDate : " << pack.start_date + " - " + pack.end_date << endl
-					 << endl;
+				t.add(to_string(j+1));
+				t.add(pack.Name);
+				t.add(pack.start_date + " - " + pack.end_date);
+				t.endOfRow();
 			}
 
+			cout<<t<<endl;
 			InputInt = input::InputInt("\n\nNumber to select package, 0 - Back");
 
 			if (InputInt > packages.size())
@@ -65,7 +72,7 @@ void PackageManagement::Detail()
 		Dependency::EndLine();
 		Dependency::EndLine();
 
-		InputInt = input::InputInt("1- Edit Package Details, 2- Delete Vessel, 0- Back");
+		InputInt = input::InputInt("1- Edit Package Details, 2- Delete Package, 0- Back");
 
 		if (InputInt == 1)
 		{
@@ -74,19 +81,51 @@ void PackageManagement::Detail()
 		else if (InputInt == 2)
 		{
 			SelectedPackageID = pack.ID;
-//            Vessel_Delete();
+			Delete();
 		}
 	} while (InputInt != 0);
 	InputInt = 1;
+}
+
+void PackageManagement::Delete()
+{
+	auto packages = from(db->ticket) >> where([&](Ticket const& a)
+	{ return a.packageID == SelectedPackageID; }) >> count();
+
+	if (packages != 0)
+	{
+		cout << "This Package cannot be deleted as it has customers associated to the package" << endl;
+	}
+
+	else{
+		InputInt = input::InputInt("Are you sure you want to Delete this Package?\n1-Yes, 0-No", 0, 1);
+
+		if (InputInt == 1)
+		{
+			auto pkg = from(db->package) >> first_or_default([&](Package const& v)
+			{ return v.ID == SelectedPackageID; });
+			if (!db->Delete(pkg))
+			{
+				cout << "DATABASE ERROR\n";
+				InputInt = 1;
+			}
+			else
+			{
+				cout << "\nVessel DELETED SUCCESSFULLY\n";
+				InputInt = 0;
+			}
+		}
+	}
+	Dependency::SleepCommand(1000);
 }
 
 void PackageManagement::detail_package(Package pack, bool showInd)
 {
 	cout << "Package Details : " << endl;
 	cout << ((showInd) ? "1 : " : "") << "Package Name : \t" + pack.Name + "\n";
-	cout << ((showInd) ? "2 : " : "") << "Start Date : \t" + pack.start_date + " tonne\n";
-	cout << ((showInd) ? "    " : "") << "End Date:  \t" + pack.end_date + " tonne\n";
-	cout << ((showInd) ? "3 : " : "") << "Price :  RM\t" + to_string(pack.price) + " metre\n";
+	cout << ((showInd) ? "2 : " : "") << "Departure Date : \t" + pack.start_date + "\n";
+	cout << ((showInd) ? "    " : "") << "Return Date:  \t" + pack.end_date + "\n";
+	cout << ((showInd) ? "3 : " : "") << "Price :  RM " + input::toString(pack.price,2) + "\n";
 }
 
 void PackageManagement::detail_route(vector<Package_Route> route, bool showInd)

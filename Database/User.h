@@ -20,7 +20,7 @@ public:
 	{
 		Id = 0;
 	};
-	User(long Id, string Username, string Password, bool IsActive, boost::optional<long> AddedBy)
+	User(long Id, string Username, string Password, bool IsActive,boost::optional<long> AddedBy)
 	{
 		this->Id = Id;
 		this->Username = Username;

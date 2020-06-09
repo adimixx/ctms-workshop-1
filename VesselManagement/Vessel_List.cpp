@@ -43,9 +43,16 @@ void VesselManagement::Detail()
 
 		Dependency::ClearScreen("Vessel Management : Vessel Detail");
 
+		TextTable t('-', '|', '+');
+		t.add("7. Register Date");
+		t.add(ves.registerDate);
+		t.endOfRow();
+		t.add("8. Status");
+		t.add(active);
+		t.endOfRow();
+
 		Vessel_VesselDetails(ves);
-		cout << "Register Date : \t" + ves.registerDate + " \n";
-		cout << "Status : \t" + active + " \n";
+		cout << t;
 
 		cout << "Deck Details : \n";
 		totalDecks = Vessel_VesselDecksDetails(ves, true);
@@ -81,10 +88,36 @@ void VesselManagement::Detail()
 
 void VesselManagement::Activation(Vessel ves)
 {
-	string active = (!ves.isActive) ? "Activate" : "Deactivate";
-	do
-	{
-		InputInt = input::InputInt("Are you sure you want to " + active + " this vessel?\n1-Yes, 0-No");
+	bool okay = true;
+
+	if (ves.isActive){
+		auto occupiedVessels = from(db->package) >> where([&](Package const& a)
+		{
+		  return input::compareDate("",input::ConvertDate(a.start_date, db->db) , db->db, false) && a.vesselID == ves.ID;
+		}) >> to_vector();
+
+		if (occupiedVessels.size() > 0)
+		{
+			TextTable t('-', '|', '+');
+			t.add("Package Name");
+			t.add("Package Date");
+			t.endOfRow();
+
+			for (int i = 0; i < occupiedVessels.size(); i++)
+			{
+				t.add(occupiedVessels.at(i).Name);
+				t.add(occupiedVessels.at(i).start_date);
+				t.endOfRow();
+			}
+
+			cout << "Cannot deactivate this vessel. This vessel is being used on the following packages : " << endl << t << endl;
+			okay = false;
+		}
+	}
+
+	if (okay){
+		string active = (!ves.isActive) ? "Activate" : "Deactivate";
+		InputInt = input::InputInt("Are you sure you want to " + active + " this vessel?\n1-Yes, 0-No", 0, 1);
 		if (InputInt == 1)
 		{
 			ves.isActive = !ves.isActive;
@@ -97,8 +130,9 @@ void VesselManagement::Activation(Vessel ves)
 			{
 				cout << "\nVessel " + active + "d" + " Successfully\n";
 			}
-			Dependency::SleepCommand(1000);
 		}
-	} while (InputInt != 1 && InputInt != 0);
-	InputInt = 0;
+	}
+
+	Dependency::SleepCommand(3000);
+	InputInt = 1;
 }

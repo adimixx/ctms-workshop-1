@@ -19,7 +19,7 @@ void RouteManagement::Add()
 		if ((from(db->route) >> where([&](Route const& x)
 		{ return boost::to_lower_copy(x.name) == boost::to_lower_copy(name); }) >> count()) != 0)
 		{
-			cout << "Vessel name already exists. Please enter different name\n";
+			cout << "Route name already exists. Please enter different name\n";
 			check = false;
 		}
 	} while (!check);

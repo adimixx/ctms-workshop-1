@@ -26,6 +26,8 @@ void PackageManagement::AddEdit(int PackageID)
 			routes = from(db->package_route) >> where([&](Package_Route const& a)
 			{ return a.PackageID == PackageID; })
 											 >> to_vector();
+			package.start_date = input::ConvertDateAndTime(package.start_date, db->db);
+			package.end_date = input::ConvertDate(package.end_date, db->db);
 		}
 		else
 		{
@@ -73,7 +75,16 @@ void PackageManagement::AddEdit(int PackageID)
 		Dependency::EndLine();
 		if (InputInt == 9)
 		{
-			bool inserted = (PackageID == 0) ? db->Insert(package, routes) : db->Update(package, routes);
+			bool inserted = false;
+			if (PackageID == 0)
+			{
+				inserted = db->Insert(package, routes);
+			}
+			else
+			{
+				inserted = db->Update(package, routes);
+			}
+
 			if (!inserted)
 			{
 				cout << "DATABASE ERROR\n";
@@ -115,6 +126,8 @@ string PackageManagement::Package_Name(int packID)
 
 long PackageManagement::Package_Vessel(string StartDate, string EndDate, int packageID)
 {
+	auto activeVessels = from(db->vessel) >> where([&](Vessel const& a)
+	{ return a.isActive; }) >> to_vector();
 	auto occupiedVessels = from(db->package) >> where([&](Package const& a)
 	{
 	  return input::compareDate(StartDate, input::ConvertDate(a.end_date, db->db), db->db, false) &&
@@ -122,9 +135,9 @@ long PackageManagement::Package_Vessel(string StartDate, string EndDate, int pac
 	}) >> select([&](Package const& a)
 	{ return a.vesselID; }) >> to_vector();
 
-	auto Vessels = from(db->vessel) >> skip_while([&](Vessel const& a)
+	auto Vessels = from(activeVessels) >> skip_while([&](Vessel const& a)
 	{ return (find(occupiedVessels.begin(), occupiedVessels.end(), a.ID) != occupiedVessels.end()); })
-									>> to_vector();
+									   >> to_vector();
 	if ((Vessels.size()) == 0)
 	{
 		cout << "There are no available vessels on the date. Please select other date\n\n";
@@ -162,11 +175,28 @@ void PackageManagement::Package_Date(string& StartDate, string& EndDate, int pac
 {
 	do
 	{
+		bool checkDate;
 		do
 		{
-			StartDate = input::InputDate("Start Date (dd/MM/yyyy)", db->db);
-			EndDate = input::InputDate("End Date (dd/MM/yyyy)", db->db);
-		} while (!input::compareDate(StartDate, EndDate, db->db, true));
+			checkDate = true;
+			StartDate = input::InputDateWithTime("Departure Date (dd/MM/yyyy)", db->db);
+			if (!input::compareDate(input::AddDay("", 3, db->db), StartDate, db->db, false))
+			{
+				cout << "Departure Date must be at least 3 days from today" << endl << endl;
+				checkDate = false;
+			}
+		} while (!checkDate);
+		do
+		{
+			checkDate = true;
+			EndDate = input::InputDate("Return Date (dd/MM/yyyy)", db->db);
+			if (!input::compareDate(StartDate, EndDate, db->db, false))
+			{
+				cout << "Arrival Date must be greater than Departure Date" << endl << endl;
+				checkDate = false;
+			}
+		} while (!checkDate);
+
 		VesselID = Package_Vessel(StartDate, EndDate, packageID);
 	} while (VesselID == 0);
 }
@@ -188,7 +218,7 @@ vector<Package_Route> PackageManagement::Package_Routes(int packageID)
 
 		detail_route(route, false);
 		cout << endl << endl << "Available Routes : " << endl;
-		for (int j = 0; j < availableRoutes.size(); ++j)
+		for (int j = 0; j < availableRoutes.size(); j++)
 		{
 			cout << j + 1 << " : " << availableRoutes.at(j).name << endl;
 		}
@@ -209,6 +239,12 @@ vector<Package_Route> PackageManagement::Package_Routes(int packageID)
 				{
 					route.emplace_back(0, sel.ID, packageID);
 				}
+			}
+
+			else if (selectedRoute == 0 && route.empty()){
+				cout << "Route list is empty. Please add at least one route!" << endl << endl;
+				Dependency::SleepCommand(1000);
+				selectedRoute = 1;
 			}
 		}
 		catch (std::exception e)

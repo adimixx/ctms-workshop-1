@@ -14,6 +14,9 @@ public:
 	long Id, UserID, RoleID;
 	User_Role()
 	{
+		Id = 0;
+		UserID = 0;
+		RoleID = 0;
 	};
 	User_Role(long Id, long UserID, long RoleID)
 	{

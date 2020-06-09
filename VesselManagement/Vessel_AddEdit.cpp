@@ -63,7 +63,9 @@ void VesselManagement::AddEdit(int VesselID)
 				InputInt = 1;
 			}
 		}
+		InputInt = 1;
 	}
+	InputInt = 1;
 }
 
 string VesselManagement::Vessel_Name(int VesselID)

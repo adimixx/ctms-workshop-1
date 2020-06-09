@@ -7,13 +7,20 @@
 boost::optional<Package> TicketManagement::Package_SelectPackage()
 {
 	Dependency::ClearScreen("TICKET COUNTER :: SELECT PACKAGE");
+	TextTable t('-', '|', '+');
+	t.add("Num");
+	t.add("Package Name");
+	t.add("Date");
+	t.endOfRow();
+
 	for (int j = 0; j < packages.size(); j++)
 	{
-		cout << j + 1 << " : " << packages[j].Name << endl;
-		cout << "Date : " << packages[j].start_date << endl;
-		cout << endl;
+		t.add(to_string(j + 1));
+		t.add(packages[j].Name);
+		t.add(packages[j].start_date);
+		t.endOfRow();
 	}
-
+	cout << t << endl;
 	InputInt = input::InputInt("Enter your input, 0 to cancel (Back to Menu)", 0, packages.size());
 
 	if (InputInt > 0)
@@ -36,32 +43,52 @@ Deck TicketManagement::Package_SelectDeck(Package selectedPackage)
 	Deck selectedDeck;
 
 	Dependency::ClearScreen("TICKET COUNTER :: SELECT PACKAGE");
-	Package_PackageDetails(selectedPackage, true, false, 0);
+	Package_PackageDetails(selectedPackage,
+		true, false, 0);
+	TextTable t('-', '|', '+');
+	t.add("Level");
+	t.add("Name");
+	t.add("Available Seats");
+	t.add("Price (Per Ticket)");
+	t.endOfRow();
 
-	cout << "Available Decks : " << endl << endl;
-
-	cout << "Deck Level & Name" << setw(30) << "Available Seats" << setw(20) << "Price (Per Ticket)" << endl;
-
-	for (int j = 0; j < vesselDeck.size(); ++j)
+	for (int j = 0; j < vesselDeck.size(); j++)
 	{
 		auto price = selectedPackage.price;
 		auto seatsLeft = vesselDeck.at(j).MaxPassenger - (from(db->ticket) >> count([&](Ticket const& a)
 		{ return a.deckID == vesselDeck.at(j).Id; }));
-		if (vesselDeck.at(j).PremiumID != 0)
+		if (vesselDeck.
+				at(j)
+			.PremiumID != 0)
 		{
-			if (vesselDeck.at(j).PremiumID == 1)
+			if (vesselDeck.
+					at(j)
+				.PremiumID == 1)
 			{
-				price += vesselDeck.at(j).PremiumValue;
+				price += vesselDeck.
+						at(j)
+					.
+						PremiumValue;
 			}
 			else
 			{
-				price *= vesselDeck.at(j).PremiumValue;
+				price *= ((100 + vesselDeck.at(j).PremiumValue) / 100);
 			}
 		}
-		cout << to_string(vesselDeck.at(j).Level) << " : " << vesselDeck.at(j).Name << setw(30) << seatsLeft << setw(20) << "RM " << price << endl;
+		t.
+			add(to_string(vesselDeck.at(j).Level)
+		);
+		t.add(vesselDeck.at(j).Name);
+		t.
+			add(to_string(seatsLeft)
+		);
+		t.add("RM " +
+			to_string(price)
+		);
+		t.endOfRow();
 	}
-	Dependency::EndLine();
-	Dependency::EndLine();
+	cout << "Available Decks : " << endl
+		 << t << endl;
 
 	check = false;
 	do
@@ -78,12 +105,15 @@ Deck TicketManagement::Package_SelectDeck(Package selectedPackage)
 			check = true;
 		}
 	} while (!check);
-	return selectedDeck;
+	return
+		selectedDeck;
 }
 
 void TicketManagement::Package_AddTickets(Deck selectedDeck, Package selectedPackage, int ticketIndex)
 {
 	vector<Ticket> ticketList;
+	double basePrice = Package_CalculateBasePrice(selectedPackage, selectedDeck);
+
 	if (ticketIndex >= 0)
 	{
 		ticketList = from(tickets.at(ticketIndex)) >> where([&](Ticket const& a)
@@ -94,13 +124,16 @@ void TicketManagement::Package_AddTickets(Deck selectedDeck, Package selectedPac
 		Dependency::ClearScreen("TICKET COUNTER :: TICKET DETAILS");
 
 		Package_PackageDetails(selectedPackage, false, true, selectedDeck.Id);
-
-		cout << "Total Tickets : " << ticketList.size() << endl << "Ticket List : " << endl;
+		cout << "Price (per ticket) : RM " << input::toString(basePrice,2) << endl
+			 << "Total Tickets : " << ticketList.size() << endl
+			 << "Ticket List : " << endl;
 		Output_Ticket(ticketList);
 		Dependency::EndLine();
 
 		InputInt = input::InputInt(
 			"1 - Add Passenger, 2 - Delete Passenger, 3 - Change Deck, 4 - Change Package, 5 - Confirm Order, 0 - Cancel");
+
+		/** Add Passenger **/
 		if (InputInt == 1)
 		{
 			Ticket newTicket;
@@ -109,8 +142,16 @@ void TicketManagement::Package_AddTickets(Deck selectedDeck, Package selectedPac
 			newTicket.name = input::getInput("Passenger Name");
 			newTicket.email = input::getInput("Passenger Email");
 			newTicket.phone = input::getInput("Passenger Phone Number");
+			cout << "Ticket type : \n";
+			for (int i = 0; i < db->ticket_type.size(); i++)
+			{
+				cout << i + 1 << " : " << db->ticket_type.at(i).name << endl;
+			}
+			newTicket.ticketTypeID = input::InputInt("Enter ticket type", db->ticket_type.front().ID, db->ticket_type.back().ID);
+			newTicket.price = Package_CalculateTicketPrice(newTicket.ticketTypeID, basePrice);
 			ticketList.emplace_back(newTicket);
 		}
+			/** Delete Passenger **/
 		else if (InputInt == 2)
 		{
 			int selectedIndex =
@@ -122,21 +163,23 @@ void TicketManagement::Package_AddTickets(Deck selectedDeck, Package selectedPac
 				InputInt = input::InputInt("Confirm to delete this passenger? 1 - yes, 0 - no", 0, 1);
 				if (InputInt == 1)
 				{
-					ticketList.erase(ticketList.begin() + (selectedIndex - 1));
+					ticketList.erase(ticketList.begin() + selectedIndex);
 				}
 				InputInt = 1;
 			}
 		}
+			/** Change Deck **/
 		else if (InputInt == 3)
 		{
 			selectedDeck = Package_SelectDeck(selectedPackage);
-			ticketList = from(ticketList) >> select([&](Ticket const& a)
+			basePrice = Package_CalculateBasePrice(selectedPackage, selectedDeck);
+			for (int i = 0; i < ticketList.size() ; i++)
 			{
-			  a.deckID << selectedDeck.Id;
-			  return a;
-			}) >> to_vector();
+				ticketList.at(i).deckID = selectedDeck.Id;
+				ticketList.at(i).price = Package_CalculateTicketPrice(ticketList.at(i).ticketTypeID, basePrice);
+			}
 		}
-
+			/** Change Package **/
 		else if (InputInt == 4)
 		{
 			boost::optional<Package> selectedPackage2 = Package_SelectPackage();
@@ -144,22 +187,25 @@ void TicketManagement::Package_AddTickets(Deck selectedDeck, Package selectedPac
 			{
 				selectedPackage = selectedPackage2.value();
 				selectedDeck = Package_SelectDeck(selectedPackage);
-				ticketList = from(ticketList) >> select([&](Ticket const& a)
+				basePrice = Package_CalculateBasePrice(selectedPackage, selectedDeck);
+				for (int i = 0; i < ticketList.size() ; i++)
 				{
-				  a.deckID << selectedDeck.Id;
-				  a.packageID << selectedPackage.ID;
-				  return a;
-				}) >> to_vector();
+					ticketList.at(i).packageID = selectedPackage.ID;
+					ticketList.at(i).deckID = selectedDeck.Id;
+					ticketList.at(i).price = Package_CalculateTicketPrice(ticketList.at(i).ticketTypeID, basePrice);
+				}
 			}
 		}
-
-		if (InputInt == 5 && ticketList.size() <= 0)
+			/** Confirm Order **/
+		else if (InputInt == 5 && ticketList.empty())
 		{
 			cout << "Ticket list cannot be empty. Please insert a ticket!" << endl;
 			InputInt = 1;
 		}
+
 	} while (InputInt != 0 && InputInt != 5);
 
+	/** Confirm Order **/
 	if (InputInt == 5)
 	{
 		if (ticketIndex >= 0)
@@ -170,6 +216,36 @@ void TicketManagement::Package_AddTickets(Deck selectedDeck, Package selectedPac
 		{
 			tickets.emplace_back(ticketList);
 		}
+	}
+	InputInt = 1;
+}
+
+double TicketManagement::Package_CalculateBasePrice(Package selectedPackage, Deck selectedDeck)
+{
+	if (selectedDeck.PremiumID == 0)
+		return selectedPackage.price;
+	else if (selectedDeck.PremiumID == 1) return selectedPackage.price + selectedDeck.PremiumValue;
+	else return selectedPackage.price * ((100 + selectedDeck.PremiumValue) / 100);
+}
+
+double TicketManagement::Package_CalculateTicketPrice(long ticketType, double basePrice){
+	auto type = from(db->ticket_type) >> first_or_default([&](Ticket_Type const& a){ return a.ID == ticketType; });
+
+	if (!type.discountID.has_value())
+	{
+		return basePrice;
+	}
+	else if (type.discountID.value() == 1)
+	{
+		double price = basePrice - type.discountValue.value();
+		if (price <= 0) price = basePrice / 2;
+		return price;
+	}
+	else
+	{
+		double price = basePrice * ((100 - type.discountValue.value()) / 100);
+		if (price <= 0) price = basePrice / 2;
+		return price;
 	}
 }
 

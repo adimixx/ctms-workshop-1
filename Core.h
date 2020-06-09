@@ -25,6 +25,8 @@
 #include "VesselManagement.h"
 #include "PackageManagement.h"
 #include "TicketManagement.h"
+#include "UserManagement.h"
+#include "Reporting.h"
 
 using namespace std;
 using namespace cpplinq;

@@ -31,7 +31,7 @@ class CtmsDB
 {
 public:
 	explicit CtmsDB(Database);
-
+	long loggedInUserID;
 	vector<Deck> deck;
 	vector<Package> package;
 	vector<Package_Route> package_route;
@@ -48,16 +48,19 @@ public:
 	void initData();
 
 	template<class T>
-	bool Delete(T item);
-
+	bool Insert(T item);
+	template<class T>
+	bool Insert(vector<T> item);
+	template<class T, class U>
+	bool Insert(T item, vector<U> item2);
 	template<class T>
 	bool Update(T item);
+	template<class T>
+	bool Update(vector<T> item);
 	template<class T, class U>
 	bool Update(T item, vector<U> item2);
 	template<class T>
-	bool Insert(T item);
-	template<class T, class U>
-	bool Insert(T item, vector<U> item2);
+	bool Delete(T item);
 	Database db;
 private:
 	bool Operation(string Query, int Type);

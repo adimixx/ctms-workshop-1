@@ -10,7 +10,6 @@ int InputInt;
 
 int main()
 {
-
 	Database DatabaseConn;
 
 	if (!DatabaseConn.ConnectionFunction())
@@ -18,9 +17,10 @@ int main()
 		return 0;
 	}
 
-	db = new CtmsDB(DatabaseConn);
 	do
 	{
+		db = new CtmsDB(DatabaseConn);
+		db->loggedInUserID = 0;
 		LoggedInUser = Login();
 	} while (MainMenu() != 0);
 }
@@ -34,7 +34,11 @@ User Login()
 	do
 	{
 		username = input::getInput("Username");
+
+		Dependency::SetStdinEcho(false);
 		password = input::getInput("Password");
+		Dependency::SetStdinEcho(true);
+
 		Dependency::ClearScreen("CTMS :: LOGIN");
 
 		checkUser = from(db->user)
@@ -51,6 +55,7 @@ User Login()
 		}
 		else
 		{
+			db->loggedInUserID = checkUser.Id;
 			LoggedIn = true;
 		}
 	} while (!LoggedIn);
@@ -62,18 +67,24 @@ long MainMenu()
 	do
 	{
 		TicketManagement ticketManagement(db);
-
+		bool isStaff, isAdmin;
 		Dependency::ClearScreen("CRUISE TICKETING MANAGEMENT SYSTEM\n");
 		cout << "WELCOME " + LoggedInUser.Username + "\n\n\n";
-
-		cout << "TICKETING MENU\n";
-		cout << "1. Open Ticket Counter\n";
-		cout << "2. Check - In Ticket\n\n";
+		if ((from(db->user_role) >> where([&](User_Role const x)
+		{ return x.RoleID == 2 && x.UserID == LoggedInUser.Id; })
+								 >> count()) == 1)
+		{
+			isStaff = true;
+			cout << "TICKETING MENU\n";
+			cout << "1. Open Ticket Counter\n";
+			cout << "2. Check - In Ticket\n\n";
+		}
 
 		if ((from(db->user_role) >> where([&](User_Role const x)
 		{ return x.RoleID == 1 && x.UserID == LoggedInUser.Id; })
 								 >> count()) == 1)
 		{
+			isAdmin = true;
 			cout << "ADMINISTRATOR MENU\n";
 			cout << "3. Route Management\n";
 			cout << "4. Vessel Management\n";
@@ -87,29 +98,39 @@ long MainMenu()
 
 		InputInt = input::InputInt("Enter your input");
 
-		if (InputInt == 1)
+		if (isStaff && InputInt == 1)
 		{
 			ticketManagement.TicketCounter();
 		}
-		else if (InputInt == 2)
+		else if (isStaff && InputInt == 2)
 		{
 			ticketManagement.TicketCheckIn();
 		}
-		else if (InputInt == 3)
+		else if (isAdmin && InputInt == 3)
 		{
 			RouteManagement route(db);
 			route.Menu();
 		}
 
-		else if (InputInt == 4)
+		else if (isAdmin && InputInt == 4)
 		{
 			VesselManagement vessel(db);
 			vessel.Menu();
 		}
-		if (InputInt == 5)
+		if (isAdmin && InputInt == 5)
 		{
 			PackageManagement packageManagement(db);
 			packageManagement.Menu();
+		}
+		if (isAdmin && InputInt == 6)
+		{
+			UserManagement userManagement(db);
+			userManagement.Menu();
+		}
+		if (isAdmin && InputInt == 7)
+		{
+			Reporting reporting(db);
+			reporting.List();
 		}
 	} while (InputInt != 0);
 
