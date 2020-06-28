@@ -14,6 +14,7 @@ class Reporting
 	void List();
  private:
 	CtmsDB* db;
+	string getHighestSelling(int days), getHighestStaff(int days);
 	int InputInt;
 };
 

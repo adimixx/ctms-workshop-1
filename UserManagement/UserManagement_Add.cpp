@@ -3,7 +3,6 @@
 //
 
 #include "UserManagement.h"
-
 void UserManagement::AddEdit(int id)
 {
 	string header = "User Management :: ";
@@ -58,6 +57,7 @@ void UserManagement::AddEdit(int id)
 		}
 		Dependency::SleepCommand(1000);
 	}
+	InputInt = 1;
 }
 
 string UserManagement::User_Username(int id)
@@ -68,7 +68,6 @@ string UserManagement::User_Username(int id)
 	{
 		check = true;
 		name = input::getInput("Enter Username");
-
 		if ((from(db->user) >> where([&](User const& a)
 		{ return boost::to_lower_copy(a.Username) == boost::to_lower_copy(name) && a.Id != id; }) >> count()) != 0)
 		{

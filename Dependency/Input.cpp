@@ -167,7 +167,6 @@ string input::AddHour(string date, int hours, Database db)
 
 string input::AddDay(string date, int day, Database db)
 {
-
 	if (date != "") db.statement = "select date_add('" + date + "' ";
 	else db.statement = "select date_add(NOW() ";
 	db.statement += ",interval " + to_string(day) + " day)";

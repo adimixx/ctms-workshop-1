@@ -50,6 +50,7 @@ void UserManagement::Detail(int id)
 		if (InputInt == 1)
 		{
 			AddEdit(id);
+			InputInt = 1;
 		}
 
 		else if (InputInt == 2)
@@ -58,6 +59,7 @@ void UserManagement::Detail(int id)
 				DeactDelete(user);
 			else
 				Activate(user);
+			InputInt = 1;
 		}
 	} while (InputInt != 0);
 }

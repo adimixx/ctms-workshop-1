@@ -22,7 +22,7 @@ private:
 	void detail_package(Package pack, bool showInd);
 	void detail_route(vector<Package_Route> route, bool showInd);
 	void detail_vessel(Vessel vessel, bool showInd);
-
+	void detail_ticketList(Package pack);
 	string Package_Name(int packID);
 	void Package_Date(string& StartDate, string& EndDate, int packageID, long& VesselID);
 	long Package_Vessel(string StartDate, string EndDate, int packageID);

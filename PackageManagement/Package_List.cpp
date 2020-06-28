@@ -68,6 +68,8 @@ void PackageManagement::Detail()
 		detail_route(route, false);
 		Dependency::EndLine();
 		detail_vessel(vessel, false);
+		Dependency::EndLine();
+		detail_ticketList(pack);
 
 		Dependency::EndLine();
 		Dependency::EndLine();
@@ -152,4 +154,43 @@ void PackageManagement::detail_vessel(Vessel vessel, bool showInd)
 	cout << "Maximum Capacity : \t" + to_string(vesselDeck >> sum([&](Deck const& x)
 	{ return x.MaxPassenger; })) +
 		" Passengers\n";
+}
+
+void PackageManagement::detail_ticketList(Package pack)
+{
+	auto ticket = from(db->ticket)>>where([&](const Ticket &x){return x.packageID == pack.ID; })>>to_vector();
+
+	if (!ticket.empty()){
+		TextTable t('-', '|', '+');
+		t.add("Num");
+		t.add("Name");
+		t.add("Phone");
+		t.add("Email");
+		t.add("Deck Name");
+		t.add("Deck Level");
+		t.add("Price & Ticket Type");
+		t.endOfRow();
+
+		for (int j = 0; j < ticket.size(); ++j)
+		{
+			auto tick = ticket.at(j);
+			auto ticketType = from(db->ticket_type)
+				>> first_or_default([&](Ticket_Type const& x)
+				{ return x.ID == tick.ticketTypeID; });
+			auto deck = from(db->deck) >> first_or_default([&](Deck const& a)
+			{ return a.Id == tick.deckID; });
+
+			t.add(to_string(j + 1));
+			t.add(tick.name);
+			t.add(tick.phone);
+			t.add(tick.email);
+			t.add(deck.Name);
+			t.add(to_string(deck.Level));
+			t.add("RM " + input::toString(tick.price, 2) + "(" + ticketType.name + ")");
+			t.endOfRow();
+		}
+		t.setAlignment(4, TextTable::Alignment::RIGHT);
+
+		cout << "TICKET LIST : " << endl << t << endl;
+	}
 }

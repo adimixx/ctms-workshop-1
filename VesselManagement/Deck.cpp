@@ -156,20 +156,28 @@ void VesselManagement::Deck_Delete()
 			cout << "Invalid deck level entered. Please try again\n";
 			chk = false;
 		}
+
 		else
 		{
 			deck = check >> first_or_default();
 		}
 	} while (!chk);
 
-	Dependency::ClearScreen("Vessel Management : Delete Deck");
-
-	cout << "Deck name : \t" + deck.Name + "\n";
-	cout << "Deck level : \t" + to_string(deck.Level) + "\n\n";
-
-	do
+	if ((from(db->ticket) >> where([&](Ticket const& a)
+	{ return a.deckID == deck.Id; }) >> count()) != 0)
 	{
-		InputInt = input::InputInt("\nConfirm to Delete deck?\n 1- Yes 0- Cancel");
+		cout << "Cannot delete this deck. User has purchased a ticket on this deck!" << endl;
+		Dependency::SleepCommand(1000);
+	}
+
+	else
+	{
+		Dependency::ClearScreen("Vessel Management : Delete Deck");
+
+		cout << "Deck name : \t" + deck.Name + "\n";
+		cout << "Deck level : \t" + to_string(deck.Level) + "\n\n";
+
+		InputInt = input::InputInt("\nConfirm to Delete deck?\n 1- Yes 0- Cancel", 0, 1);
 
 		if (InputInt == 1)
 		{
@@ -183,6 +191,6 @@ void VesselManagement::Deck_Delete()
 			}
 			Dependency::SleepCommand(1000);
 		}
-	} while (InputInt != 1 && InputInt != 0);
+	}
 	InputInt = 1;
 }

@@ -107,7 +107,7 @@ void TicketManagement::checkIn_Ticket(User currentUser, Package pkg, Vessel vess
 {
 	vector<Ticket> checkInTicket, notCheckInTicket, findTicket, currentPkg;
 	currentPkg = from(db->ticket) >> where([&](Ticket const& a)
-	{ return a.packageID == pkg.ID; }) >> to_vector();
+	{ return a.packageID == pkg.ID && !a.checkIn; }) >> to_vector();
 
 	Output_CheckInHeader(currentUser, pkg, vessel);
 	cout << "Check In ticket" << endl << endl;
